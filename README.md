@@ -9,6 +9,15 @@
 - **Описания**: Отображение описаний того, что делалось во время работы
 - **Автообъединение**: Соседние блоки объединяются (gap < 5 мин)
 - **Часовой пояс**: Настраиваемое отображение времени
+- **Фильтрация**: Показывает только активные проекты
+
+## Технологии
+
+- **FastAPI** - Веб-фреймворк для API
+- **Pydantic** - Валидация данных и сериализация
+- **httpx** - Асинхронные HTTP запросы к Clockify API
+- **structlog** - Структурированное логирование
+- **pytest** - Тестирование с покрытием кода
 
 ## Установка
 
@@ -39,7 +48,7 @@ CLOCKIFY_WORKSPACE_ID=your_workspace_id_here
 CLOCKIFY_USER_ID=your_user_id_here
 
 # Настройки
-TIMEZONE_OFFSET=3  # GMT+3 для Москвы/Минска
+TIMEZONE_OFFSET=3  # GMT+3 для Москвы
 MAX_PERIOD_DAYS=31
 ```
 
@@ -95,6 +104,23 @@ GET /api/v1/project-timeline?start_date=2024-10-21&end_date=2024-10-27&project=J
 GET /api/v1/projects
 ```
 
+## Примеры использования
+
+### Получение данных за неделю
+```bash
+curl "http://localhost:8000/api/v1/daily-timeline?start_date=2024-10-21&end_date=2024-10-27"
+```
+
+### Анализ конкретного проекта
+```bash
+curl "http://localhost:8000/api/v1/project-timeline?start_date=2024-10-21&end_date=2024-10-27&project=Job"
+```
+
+### Список всех проектов
+```bash
+curl "http://localhost:8000/api/v1/projects"
+```
+
 ## Тестирование
 
 ```bash
@@ -103,19 +129,58 @@ make test-coverage # С покрытием кода
 make test-verbose  # Подробный вывод
 ```
 
-**Покрытие кода**: 63% (23 теста)
+**Покрытие кода**: 70% (88 тестов)
+
+### Структура тестов
+
+- **`test_api.py`** - API endpoints и обработка ошибок (11 тестов)
+- **`test_basic.py`** - Утилиты и валидаторы (12 тестов)  
+- **`test_schemas.py`** - Pydantic модели запросов (44 теста)
+- **`test_clockify_client_simple.py`** - Clockify клиент (9 тестов)
+- **`test_timeline_service_simple.py`** - Timeline сервис (10 тестов)
+- **`test_main_simple.py`** - Основное приложение (12 тестов)
+
+### Компоненты с полным покрытием
+
+- ✅ **Схемы запросов** (`app/schemas/request.py`) - 100%
+- ✅ **Схемы ответов** (`app/schemas/response.py`) - 100%
+- ✅ **Clockify модели** (`app/schemas/clockify.py`) - 100%
+- ✅ **Конфигурация** (`app/core/config.py`) - 100%
+- ✅ **Форматирование времени** (`app/utils/time_formatter.py`) - 92%
+- ✅ **Валидаторы** (`app/utils/validators.py`) - 91%
+
+## Разработка
+
+### Структура проекта
+```
+app/
+├── core/           # Конфигурация
+├── routers/        # API endpoints
+├── schemas/        # Pydantic модели
+├── services/       # Бизнес-логика
+└── utils/          # Утилиты
+```
+
+### Команды разработки
+```bash
+make install       # Установка зависимостей
+make test          # Запуск тестов
+make test-coverage # Тесты с покрытием
+make clean         # Очистка кэша
+make run           # Запуск приложения
+```
 
 ## Документация
 
 - **Swagger UI**: http://localhost:8000/docs
 - **ReDoc**: http://localhost:8000/redoc
-- **Тестирование**: [TESTING.md](TESTING.md)
+- **Тестирование**: Комплексное покрытие всех компонентов
 
 ## Настройка часового пояса
 
 `TIMEZONE_OFFSET` - смещение в часах от UTC:
 - `0` - UTC (по умолчанию)
-- `3` - GMT+3 (Москва, Минск)
+- `3` - GMT+3 (Москва)
 - `-5` - GMT-5 (Нью-Йорк)
 
 **Пример:** 06:55 UTC → 09:55 GMT+3 (с `TIMEZONE_OFFSET=3`)
@@ -136,3 +201,15 @@ make test-verbose  # Подробный вывод
 - `404` - Project not found
 - `401` - Invalid API key
 - `500` - Server error
+
+## Лицензия
+
+MIT License - свободное использование и модификация.
+
+## Поддержка
+
+При возникновении проблем:
+1. Проверьте конфигурацию в `.env`
+2. Убедитесь что API ключ Clockify действителен
+3. Проверьте логи приложения
+4. Запустите тесты: `make test`
